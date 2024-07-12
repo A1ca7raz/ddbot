@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+src="./parts/"
+shebang="#!/usr/bin/env bash"
+dist="ddbot"
+
+echo "${shebang}" > $dist
+
+for part in $(find "${src}" -type f | awk -F"${src}" '{ print $2 }'); do
+  echo -e "\n### BEGIN ${part} ###" >> $dist
+  cat "${src}${part}" >> $dist
+  echo -e "### END ${part} ###" >> $dist
+done
