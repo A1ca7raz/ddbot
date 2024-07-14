@@ -28,9 +28,13 @@ while [[ $# -ge 1 ]]; do
       CFG=$1
       shift
       ;;
-    --debug)
+    -d|--debug)
       shift
       DEBUG=1
+      ;;
+    --dry-run)
+      shift
+      DRYRUN=echo -E
       ;;
     *)
       echo -e "$app_name: Invaild option: $1"

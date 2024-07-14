@@ -6,7 +6,8 @@ dist="ddbot"
 
 echo "${shebang}" > $dist
 
-for part in $(find "${src}" -type f | awk -F"${src}" '{ print $2 }'); do
+for part in $(find "${src}" -type f | awk -F"${src}" '{ print $2 }' | sort); do
+  echo "Parsing ${part}..."
   echo -e "\n### BEGIN ${part} ###" >> $dist
   cat "${src}${part}" >> $dist
   echo -e "### END ${part} ###" >> $dist

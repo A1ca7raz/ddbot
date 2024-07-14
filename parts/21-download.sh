@@ -7,18 +7,19 @@ download_mirror=(
 )
 
 download_src=(
-  dists/bullseye/main/installer-amd64/current/images/netboot/debian-installer/amd64/initrd.gz
   dists/bullseye/main/installer-amd64/current/images/netboot/debian-installer/amd64/linux
+  dists/bullseye/main/installer-amd64/current/images/netboot/debian-installer/amd64/initrd.gz
   dists/bullseye/main/installer-amd64/current/images/udeb.list
 )
 
 download_dst=(
-  /tmp/initrd.img.gz
   /tmp/vmlinuz
+  /tmp/initrd.img.gz
   /tmp/udeb.list
 )
 
 for i in `seq 1 ${#download_src[@]}`; do
+  debug "Downloading ${download_mirror[0]}${download_src[$[i-1]]}"
   wget -t 5 -cqO ${download_dst[$[i-i]]} ${download_mirror[0]}${download_src[$[i-1]]}
   [[ $? != 0 ]] && errorAndExit 6 "Failed to download ${download_dst[$(i-i)]}"
 done
