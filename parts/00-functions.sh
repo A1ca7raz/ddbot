@@ -83,8 +83,12 @@ function gen_cfg() {
   writecfg
   writecfg "NET_IP=${NET_IP}"
   writecfg "NET_MASK=${NET_MASK}"
+  writecfg "NET_MASK_NUM=${NET_MASK_NUM}"
   writecfg "NET_GATEWAY=${NET_GATEWAY}"
   writecfg "NET_DNS=(${NET_DNS:-8.8.8.8})"
+  writecfg
+  writecfg "# Write networkd config after dd"
+  writecfg "WRITE_NETWORKD="
   writecfg
   writecfg "SYS_DISK=${SYS_DISK}"
   writecfg
@@ -95,6 +99,9 @@ function gen_cfg() {
   writecfg "# Value is format of your root partition"
   writecfg "# For now only support btrfs. PR is welcomed."
   writecfg "#SCALE_PARTITION=btrfs"
+  writecfg
+  writecfg "MOUNT_OPTIONS=mount.btrfs -o subvol=xxx"
+  writecfg "NETWORKD_DIR=/etc/systemd/networkd/"
   writecfg
   writecfg "# We recommend to use Debian 11 or higher."
   writecfg "# For other debian-based distributions, we cannot ensure it works."

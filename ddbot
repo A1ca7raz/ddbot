@@ -86,8 +86,12 @@ function gen_cfg() {
   writecfg
   writecfg "NET_IP=${NET_IP}"
   writecfg "NET_MASK=${NET_MASK}"
+  writecfg "NET_MASK_NUM=${NET_MASK_NUM}"
   writecfg "NET_GATEWAY=${NET_GATEWAY}"
   writecfg "NET_DNS=(${NET_DNS:-8.8.8.8})"
+  writecfg
+  writecfg "# Write networkd config after dd"
+  writecfg "WRITE_NETWORKD="
   writecfg
   writecfg "SYS_DISK=${SYS_DISK}"
   writecfg
@@ -98,6 +102,9 @@ function gen_cfg() {
   writecfg "# Value is format of your root partition"
   writecfg "# For now only support btrfs. PR is welcomed."
   writecfg "#SCALE_PARTITION=btrfs"
+  writecfg
+  writecfg "MOUNT_OPTIONS=mount.btrfs -o subvol=xxx"
+  writecfg "NETWORKD_DIR=/etc/systemd/networkd/"
   writecfg
   writecfg "# We recommend to use Debian 11 or higher."
   writecfg "# For other debian-based distributions, we cannot ensure it works."
@@ -131,12 +138,15 @@ CFG=$default_cfg
 CFG_UNFINISHED=1
 NET_IP=
 NET_MASK=
+NET_MASK_NUM=
 NET_GATEWAY=
 NET_DNS=
 NET_IFACE= # only used in gencfg
 SYS_DISK=
 IMAGE_URL=
 SCALE_PARTITION=
+MOUNT_OPTIONS=mount
+NETWORKD_DIR=/etc/systemd/networkd/
 IGNORE_DISTRO=
 IGNORE_ARCH=
 
@@ -239,7 +249,8 @@ if [[ $OPERATION = "gencfg" ]]; then
   NET_IFACE=`getInterface`
   cidr=`ip addr show dev $NET_IFACE |grep "inet.*" |head -n1 |grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\/[0-9]\{1,2\}'`
   NET_IP=`echo ${cidr} |cut -d'/' -f1`
-  NET_MASK=`parseNetMask $(echo ${cidr} |cut -d'/' -f2)`
+  NET_MASK_NUM=$(echo ${cidr} |cut -d'/' -f2)
+  NET_MASK=`parseNetMask $NET_MASK_NUM`
   NET_GATEWAY=`ip route show default |grep "^default" |grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' |head -n1`
   NET_DNS=`getDNS`
   
@@ -354,11 +365,21 @@ d-i clock-setup/utc boolean true
 d-i time/zone string US/Eastern
 d-i clock-setup/ntp boolean false
 
-d-i preseed/early_command string anna-install libcrypto1.1-udeb libpcre2-8-0-udeb libssl1.1-udeb libuuid1-udeb zlib1g-udeb wget-udeb kpartx-udeb
+d-i preseed/early_command string anna-install libcrypto1.1-udeb libpcre2-8-0-udeb libssl1.1-udeb libuuid1-udeb zlib1g-udeb wget-udeb kpartx-udeb btrfs-progs-udeb
 d-i partman/early_command string [[ -n "\$(blkid -t TYPE='vfat' -o device)" ]] && umount "\$(blkid -t TYPE='vfat' -o device)"; \
 debconf-set partman-auto/disk "\$(list-devices disk |head -n1)"; \
 wget -qO- '$IMAGE_URL' | gunzip -dc | /bin/dd of=\$(list-devices disk |head -n1); \
 ${scaleScript} \
+mkdir /mount \
+$MOUNT_OPTIONS `ls ${SYS_DISK}* | tail -n1` /mount \
+echo "[Match]" > /mount${NETWORKD_DIR}/eth0.network \
+echo "Name=eth0" >> /mount${NETWORKD_DIR}/eth0.network \
+echo >> /mount${NETWORKD_DIR}/eth0.network \
+echo "[Network]" >> /mount${NETWORKD_DIR}/eth0.network \
+echo "Address=$NET_IP/$NET_MASK_NUM" >> /mount${NETWORKD_DIR}/eth0.network \
+echo "Gateway=$NET_GATEWAY" >> /mount${NETWORKD_DIR}/eth0.network \
+for i in ${NET_DNS[@]}; do echo "DNS=$" >> /mount${NETWORKD_DIR}/eth0.network ; done \
+echo >> /mount${NETWORKD_DIR}/eth0.network \
 /sbin/reboot; \
 umount /media || true; \
 EOF

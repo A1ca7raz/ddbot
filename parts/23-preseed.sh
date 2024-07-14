@@ -50,11 +50,21 @@ d-i clock-setup/utc boolean true
 d-i time/zone string US/Eastern
 d-i clock-setup/ntp boolean false
 
-d-i preseed/early_command string anna-install libcrypto1.1-udeb libpcre2-8-0-udeb libssl1.1-udeb libuuid1-udeb zlib1g-udeb wget-udeb kpartx-udeb
+d-i preseed/early_command string anna-install libcrypto1.1-udeb libpcre2-8-0-udeb libssl1.1-udeb libuuid1-udeb zlib1g-udeb wget-udeb kpartx-udeb btrfs-progs-udeb
 d-i partman/early_command string [[ -n "\$(blkid -t TYPE='vfat' -o device)" ]] && umount "\$(blkid -t TYPE='vfat' -o device)"; \
 debconf-set partman-auto/disk "\$(list-devices disk |head -n1)"; \
 wget -qO- '$IMAGE_URL' | gunzip -dc | /bin/dd of=\$(list-devices disk |head -n1); \
 ${scaleScript} \
+mkdir /mount \
+$MOUNT_OPTIONS `ls ${SYS_DISK}* | tail -n1` /mount \
+echo "[Match]" > /mount${NETWORKD_DIR}/eth0.network \
+echo "Name=eth0" >> /mount${NETWORKD_DIR}/eth0.network \
+echo >> /mount${NETWORKD_DIR}/eth0.network \
+echo "[Network]" >> /mount${NETWORKD_DIR}/eth0.network \
+echo "Address=$NET_IP/$NET_MASK_NUM" >> /mount${NETWORKD_DIR}/eth0.network \
+echo "Gateway=$NET_GATEWAY" >> /mount${NETWORKD_DIR}/eth0.network \
+for i in ${NET_DNS[@]}; do echo "DNS=$" >> /mount${NETWORKD_DIR}/eth0.network ; done \
+echo >> /mount${NETWORKD_DIR}/eth0.network \
 /sbin/reboot; \
 umount /media || true; \
 EOF

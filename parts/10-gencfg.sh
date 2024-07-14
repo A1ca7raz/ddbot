@@ -43,7 +43,8 @@ if [[ $OPERATION = "gencfg" ]]; then
   NET_IFACE=`getInterface`
   cidr=`ip addr show dev $NET_IFACE |grep "inet.*" |head -n1 |grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\/[0-9]\{1,2\}'`
   NET_IP=`echo ${cidr} |cut -d'/' -f1`
-  NET_MASK=`parseNetMask $(echo ${cidr} |cut -d'/' -f2)`
+  NET_MASK_NUM=$(echo ${cidr} |cut -d'/' -f2)
+  NET_MASK=`parseNetMask $NET_MASK_NUM`
   NET_GATEWAY=`ip route show default |grep "^default" |grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' |head -n1`
   NET_DNS=`getDNS`
   
